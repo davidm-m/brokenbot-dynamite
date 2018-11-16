@@ -7,7 +7,7 @@ class Brokenbot {
     makeMove(gamestate) {
         this.getLastWinner(gamestate);
         const waterOdds = this.getWaterOdds(gamestate);
-        const dynamiteOdds = this.myDynamite > 0 ? 0.1 : 0;
+        const dynamiteOdds = (this.myDynamite > 0 && gamestate.rounds.length > 20) ? 1/15 : 0;
         return this.getMoveByOdds(waterOdds, dynamiteOdds);
     }
 
