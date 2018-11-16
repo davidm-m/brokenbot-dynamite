@@ -1,68 +1,80 @@
 class Brokenbot {
     constructor() {
-        let myDynamite = 100;
-        let opponentDynamite = 100;
-        const Moves = Object.freeze({
-            Rock: "R",
-            Paper: "S",
-            Scissors: "S",
-            Dynamite: "D",
-            Water: "W"
-        });
+        this.myDynamite = 100;
+        this.opponentDynamite = 100;
     }
 
     makeMove(gamestate) {
-        getLastWinner(gamestate);
-        return this.getRandomRPS();
+        this.getLastWinner(gamestate);
+        return this.getRandomMove();
+    }
+
+    getRandomMove() {
+        let moves = ["R", "P", "S"];
+        if (this.myDynamite > 0) {
+            moves.push("D");
+        }
+        if (this.opponentDynamite > 0) {
+            moves.push("W");
+        }
+        const result = this.getRandomFromArray(moves);
+        if (result === "D") {
+            this.myDynamite--;
+        }
+        return result;
     }
 
     getRandomRPS() {
-        const random = Math.floor(Math.random() * 3);
-        switch (random) {
-            case 0:
-                return Moves.Rock;
-            case 1:
-                return Moves.Paper;
-            case 2:
-                return Moves.Scissors;
-            default:
-                return Moves.Paper;
-        }
+        return this.getRandomFromArray(["R", "P", "S"]);
+    }
+
+    getRandomFromArray(array) {
+        const random = Math.floor(Math.random() * array.length);
+        return array[random];
     }
 
     getLastWinner(gamestate) {
-        return this.getWinner(gamestate[gamestate.length -1].p1, gamestate[gamestate.length -1].p2)
+        if (!gamestate.rounds.length > 0) {
+            return;
+        }
+        if (gamestate.rounds[gamestate.rounds.length - 1].p2 === "D") {
+            this.opponentDynamite--;
+        }
+        return this.getWinner(
+            gamestate.rounds[gamestate.rounds.length - 1].p1,
+            gamestate.rounds[gamestate.rounds.length - 1].p2
+        );
     }
 
     getWinner(p1, p2) {
         if (p1 === p2) {
             return 0;
-        } else if (p1 === Moves.Dynamite) {
-            if (p2 === Moves.Water) {
+        } else if (p1 === "D") {
+            if (p2 === "W") {
                 return 2;
             } else {
                 return 1;
             }
-        } else if (p1 === Moves.Water) {
-            if (p2 === Moves.Dynamite) {
+        } else if (p1 === "W") {
+            if (p2 === "D") {
                 return 1;
             } else {
                 return 2;
             }
-        } else if (p1 === Moves.Rock) {
-            if (p2 === Moves.Scissors) {
+        } else if (p1 === "R") {
+            if (p2 === "S") {
                 return 1;
             } else {
                 return 2;
             }
-        } else if (p1 === Moves.Paper) {
-            if (p2 === Moves.Rock) {
+        } else if (p1 === "P") {
+            if (p2 === "R") {
                 return 1;
             } else {
                 return 2;
             }
-        } else if (p1 === Moves.Scissors) {
-            if (p2 === Moves.Paper) {
+        } else if (p1 === "S") {
+            if (p2 === "P") {
                 return 1;
             } else {
                 return 2;
@@ -71,4 +83,4 @@ class Brokenbot {
     }
 }
 
-module.exports = new Bot();
+module.exports = new Brokenbot();
