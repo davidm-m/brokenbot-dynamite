@@ -2,17 +2,75 @@ class Brokenbot {
     constructor() {
         this.myDynamite = 100;
         this.opponentDynamite = 100;
-        this.minDynamite = 1;
+        this.minDynamite = 5;
+        this.opponentDrawCounter = 100;
+        this.myScore = 0;
+        this.opponentScore = 0;
+        this.breaksWithDynamite = false;
+        this.breaksWithWater = false;
     }
 
     makeMove(gamestate) {
-        this.getLastWinner(gamestate.rounds);
-        if (Utility.getDrawStreak(gamestate.rounds) > 1 && this.myDynamite > this.minDynamite) {
+        const lastWinner = this.getLastWinner(gamestate.rounds);
+        if (
+            (this.myScore >= 1000 - this.minDynamite ||
+                this.opponentScore >= 1000 - this.minDynamite) &&
+            this.myDynamite > 0
+        ) {
             this.myDynamite--;
             return "D";
         }
+        const drawStreak = Utility.getDrawStreak(gamestate.rounds);
+        const prevDrawStreak = Utility.getDrawStreak(
+            gamestate.rounds.slice(0, -1)
+        );
+        if (prevDrawStreak > 0 && drawStreak === 0) {
+            if (gamestate.rounds[gamestate.rounds.length - 1].p2 === "D") {
+                this.breaksWithDynamite = true;
+            } else if (
+                gamestate.rounds[gamestate.rounds.length - 1].p2 === "W"
+            ) {
+                this.breaksWithWater = true;
+            }
+            switch (lastWinner) {
+                case 1:
+                    this.opponentDrawCounter = prevDrawStreak + 1;
+                    break;
+                case 2:
+                    this.opponentDrawCounter = prevDrawStreak;
+                    break;
+                default:
+                    break;
+            }
+        }
+        if (drawStreak > 0) {
+            if (gamestate.rounds[gamestate.rounds.length - 1].p2 === "D") {
+                this.breaksWithDynamite = true;
+                this.opponentDrawCounter = drawStreak - 1;
+            } else if (
+                gamestate.rounds[gamestate.rounds.length - 1].p2 === "W"
+            ) {
+                this.breaksWithWater = true;
+                this.opponentDrawCounter = drawStreak - 1;
+            }
+            if (drawStreak >= this.opponentDrawCounter) {
+                if (this.breaksWithWater) {
+                    return this.getRandomRPS();
+                } else {
+                    return "W";
+                }
+            } else {
+                if (drawStreak > 1 && this.myDynamite > this.minDynamite) {
+                    this.myDynamite--;
+                    return "D";
+                }
+            }
+        }
         const waterOdds = this.getWaterOdds(gamestate.rounds);
-        const dynamiteOdds = (this.myDynamite > this.minDynamite && gamestate.rounds.length > 20) ? 1/15 : 0;
+        const dynamiteOdds =
+            this.myDynamite > this.minDynamite && gamestate.rounds.length > 20
+                ? 1 / 20
+                : 0;
         return this.getMoveByOdds(waterOdds, dynamiteOdds);
     }
 
@@ -24,8 +82,9 @@ class Brokenbot {
             numOfRounds = rounds.length;
         }
         const recentRounds = rounds.slice(-numOfRounds);
-        const numberOfDynamite = recentRounds.filter(round => round.p2 === "D").length;
-        return numberOfDynamite/numOfRounds;
+        const numberOfDynamite = recentRounds.filter(round => round.p2 === "D")
+            .length;
+        return numberOfDynamite / (numOfRounds * 1.5);
     }
 
     getRandomMove() {
@@ -47,7 +106,7 @@ class Brokenbot {
         const random = Math.random();
         if (random < wOdds) {
             return "W";
-        } else if (random < (dOdds + wOdds)) {
+        } else if (random < dOdds + wOdds) {
             this.myDynamite--;
             return "D";
         } else {
@@ -66,16 +125,19 @@ class Brokenbot {
         if (rounds[rounds.length - 1].p2 === "D") {
             this.opponentDynamite--;
         }
-        return Utility.getWinner(
-           rounds[rounds.length - 1].p1,
+        const lastWinner = Utility.getWinner(
+            rounds[rounds.length - 1].p1,
             rounds[rounds.length - 1].p2
         );
+        if (lastWinner === 1) {
+            this.myScore += Utility.getDrawStreak(rounds) + 1;
+        } else if (lastWinner === 2) {
+            this.opponentScore += Utility.getDrawStreak(rounds) + 1;
+        }
     }
-    
 }
 
 class Utility {
-
     static getDrawStreak(rounds) {
         if (rounds.length === 0) {
             return 0;
