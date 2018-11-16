@@ -12,12 +12,14 @@ class Brokenbot {
     }
 
     getWaterOdds(gamestate) {
-        if (gamestate.rounds.length < 10) {
+        if (!this.opponentDynamite > 0) {
+            return 0;
+        } else if (gamestate.rounds.length < 10) {
             return 0.15;
         } else {
             const recentRounds = gamestate.rounds.slice(-10);
             const numberOfDynamite = recentRounds.filter(round => round.p2 === "D").length;
-            return numberOfDynamite < 10 ? (numberOfDynamite/10 + 0.01) : 1;
+            return numberOfDynamite < 10 ? (numberOfDynamite/10 + 0.005) : 1;
         }
     }
 
