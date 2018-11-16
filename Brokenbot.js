@@ -19,7 +19,7 @@ class Brokenbot {
         } else {
             const recentRounds = gamestate.rounds.slice(-10);
             const numberOfDynamite = recentRounds.filter(round => round.p2 === "D").length;
-            return numberOfDynamite < 10 ? (numberOfDynamite/10 + 0.005) : 1;
+            return numberOfDynamite/10;
         }
     }
 
