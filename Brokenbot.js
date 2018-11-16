@@ -2,25 +2,30 @@ class Brokenbot {
     constructor() {
         this.myDynamite = 100;
         this.opponentDynamite = 100;
+        this.minDynamite = 1;
     }
 
     makeMove(gamestate) {
-        this.getLastWinner(gamestate);
-        const waterOdds = this.getWaterOdds(gamestate);
-        const dynamiteOdds = (this.myDynamite > 0 && gamestate.rounds.length > 20) ? 1/15 : 0;
+        this.getLastWinner(gamestate.rounds);
+        if (Utility.getDrawStreak(gamestate.rounds) > 1 && this.myDynamite > this.minDynamite) {
+            this.myDynamite--;
+            return "D";
+        }
+        const waterOdds = this.getWaterOdds(gamestate.rounds);
+        const dynamiteOdds = (this.myDynamite > this.minDynamite && gamestate.rounds.length > 20) ? 1/15 : 0;
         return this.getMoveByOdds(waterOdds, dynamiteOdds);
     }
 
-    getWaterOdds(gamestate) {
-        if (!this.opponentDynamite > 0) {
+    getWaterOdds(rounds) {
+        let numOfRounds = 20;
+        if (!this.opponentDynamite > 0 || rounds.length === 0) {
             return 0;
-        } else if (gamestate.rounds.length < 10) {
-            return 0.15;
-        } else {
-            const recentRounds = gamestate.rounds.slice(-10);
-            const numberOfDynamite = recentRounds.filter(round => round.p2 === "D").length;
-            return numberOfDynamite/10;
+        } else if (rounds.length < 20) {
+            numOfRounds = rounds.length;
         }
+        const recentRounds = rounds.slice(-numOfRounds);
+        const numberOfDynamite = recentRounds.filter(round => round.p2 === "D").length;
+        return numberOfDynamite/numOfRounds;
     }
 
     getRandomMove() {
@@ -54,23 +59,37 @@ class Brokenbot {
         return Utility.getRandomFromArray(["R", "P", "S"]);
     }
 
-    getLastWinner(gamestate) {
-        if (!gamestate.rounds.length > 0) {
+    getLastWinner(rounds) {
+        if (!rounds.length > 0) {
             return;
         }
-        if (gamestate.rounds[gamestate.rounds.length - 1].p2 === "D") {
+        if (rounds[rounds.length - 1].p2 === "D") {
             this.opponentDynamite--;
         }
         return Utility.getWinner(
-            gamestate.rounds[gamestate.rounds.length - 1].p1,
-            gamestate.rounds[gamestate.rounds.length - 1].p2
+           rounds[rounds.length - 1].p1,
+            rounds[rounds.length - 1].p2
         );
     }
-
     
 }
 
 class Utility {
+
+    static getDrawStreak(rounds) {
+        if (rounds.length === 0) {
+            return 0;
+        }
+        let streak = 0;
+        for (let i = rounds.length - 1; i >= 0; i--) {
+            if (Utility.getWinner(rounds[i].p1, rounds[i].p2) === 0) {
+                streak++;
+            } else {
+                break;
+            }
+        }
+        return streak;
+    }
 
     static getRandomFromArray(array) {
         const random = Math.floor(Math.random() * array.length);
