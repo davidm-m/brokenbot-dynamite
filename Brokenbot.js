@@ -11,6 +11,7 @@ class Brokenbot {
     }
 
     makeMove(gamestate) {
+        console.log(this.myDynamite);
         const lastWinner = this.getLastWinner(gamestate.rounds);
         if (
             (this.myScore >= 1000 - this.minDynamite ||
@@ -32,15 +33,10 @@ class Brokenbot {
             ) {
                 this.breaksWithWater = true;
             }
-            switch (lastWinner) {
-                case 1:
-                    this.opponentDrawCounter = prevDrawStreak + 1;
-                    break;
-                case 2:
-                    this.opponentDrawCounter = prevDrawStreak;
-                    break;
-                default:
-                    break;
+            if (gamestate.rounds[gamestate.rounds.length - 1].p2 === "D" || gamestate.rounds[gamestate.rounds.length - 1].p2 === "W") {
+                this.opponentDrawCounter = prevDrawStreak;
+            } else {
+                this.opponentDrawCounter = prevDrawStreak + 1;
             }
         }
         if (drawStreak > 0) {
@@ -56,14 +52,13 @@ class Brokenbot {
             if (drawStreak >= this.opponentDrawCounter) {
                 if (this.breaksWithWater) {
                     return this.getRandomRPS();
-                } else {
+                } else if (this.breaksWithDynamite) {
                     return "W";
                 }
-            } else {
-                if (drawStreak > 1 && this.myDynamite > this.minDynamite) {
-                    this.myDynamite--;
-                    return "D";
-                }
+            }
+            if (drawStreak > 1 && this.myDynamite > this.minDynamite) {
+                this.myDynamite--;
+                return "D";
             }
         }
         const waterOdds = this.getWaterOdds(gamestate.rounds);
