@@ -8,19 +8,15 @@ class Brokenbot {
         this.opponentScore = 0;
         this.breaksWithDynamite = false;
         this.breaksWithWater = false;
+        this.opponentMoves = {
+            R: 0,
+            P: 0,
+            S: 0,
+        }
     }
 
     makeMove(gamestate) {
-        console.log(this.myDynamite);
         const lastWinner = this.getLastWinner(gamestate.rounds);
-        if (
-            (this.myScore >= 1000 - this.minDynamite ||
-                this.opponentScore >= 1000 - this.minDynamite) &&
-            this.myDynamite > 0
-        ) {
-            this.myDynamite--;
-            return "D";
-        }
         const drawStreak = Utility.getDrawStreak(gamestate.rounds);
         const prevDrawStreak = Utility.getDrawStreak(
             gamestate.rounds.slice(0, -1)
@@ -33,7 +29,10 @@ class Brokenbot {
             ) {
                 this.breaksWithWater = true;
             }
-            if (gamestate.rounds[gamestate.rounds.length - 1].p2 === "D" || gamestate.rounds[gamestate.rounds.length - 1].p2 === "W") {
+            if (
+                gamestate.rounds[gamestate.rounds.length - 1].p2 === "D" ||
+                gamestate.rounds[gamestate.rounds.length - 1].p2 === "W"
+            ) {
                 this.opponentDrawCounter = prevDrawStreak;
             } else {
                 this.opponentDrawCounter = prevDrawStreak + 1;
@@ -64,7 +63,7 @@ class Brokenbot {
         const waterOdds = this.getWaterOdds(gamestate.rounds);
         const dynamiteOdds =
             this.myDynamite > this.minDynamite && gamestate.rounds.length > 20
-                ? 1 / 20
+                ? 1 / 40
                 : 0;
         return this.getMoveByOdds(waterOdds, dynamiteOdds);
     }
@@ -79,7 +78,7 @@ class Brokenbot {
         const recentRounds = rounds.slice(-numOfRounds);
         const numberOfDynamite = recentRounds.filter(round => round.p2 === "D")
             .length;
-        return numberOfDynamite / (numOfRounds * 1.5);
+        return numberOfDynamite / (numOfRounds * 2);
     }
 
     getRandomMove() {
@@ -110,12 +109,36 @@ class Brokenbot {
     }
 
     getRandomRPS() {
-        return Utility.getRandomFromArray(["R", "P", "S"]);
+        const random = Math.random();
+        const rpsMoves = this.opponentMoves.R + this.opponentMoves.P + this.opponentMoves.S;
+        if (rpsMoves === 0) {
+            return Utility.getRandomFromArray(["R", "P", "S"]);
+        }
+        if (random < this.opponentMoves.R / rpsMoves) {
+            return "P";
+        } else if (random < (this.opponentMoves.R + this.opponentMoves.P) / rpsMoves) {
+            return "S";
+        } else {
+            return "R";
+        }
     }
 
     getLastWinner(rounds) {
         if (!rounds.length > 0) {
             return;
+        }
+        switch(rounds[rounds.length - 1].p2) {
+            case "R":
+                this.opponentMoves.R++;
+                break;
+            case "P":
+                this.opponentMoves.P++;
+                break;
+            case "S":
+                this.opponentMoves.S++;
+                break;
+            default:
+                break;
         }
         if (rounds[rounds.length - 1].p2 === "D") {
             this.opponentDynamite--;
@@ -125,9 +148,10 @@ class Brokenbot {
             rounds[rounds.length - 1].p2
         );
         if (lastWinner === 1) {
-            this.myScore += Utility.getDrawStreak(rounds) + 1;
+            this.myScore += Utility.getDrawStreak(rounds.slice(0, -1)) + 1;
         } else if (lastWinner === 2) {
-            this.opponentScore += Utility.getDrawStreak(rounds) + 1;
+            this.opponentScore +=
+                Utility.getDrawStreak(rounds.slice(0, -1)) + 1;
         }
     }
 }
