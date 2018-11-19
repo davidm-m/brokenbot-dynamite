@@ -2,13 +2,13 @@ class Brokenbot {
     constructor() {
         this.myDynamite = 100;
         this.opponentDynamite = 100;
-        this.minDynamite = 5;
+        this.minDynamite = 1;
         this.opponentDrawCounter = 100;
         this.myScore = 0;
         this.opponentScore = 0;
         this.breaksWithDynamite = false;
         this.breaksWithWater = false;
-        this.rpsWindowSize = 50;
+        this.rpsWindowSize = 20;
     }
 
     makeMove(gamestate) {
@@ -45,10 +45,13 @@ class Brokenbot {
                 this.opponentDrawCounter = drawStreak - 1;
             }
             if (drawStreak >= this.opponentDrawCounter) {
+                if (this.breaksWithDynamite && this.breaksWithWater) {
+                    return this.getMoveByOdds(0.4, 0.4, gamestate.rounds)
+                }
                 if (this.breaksWithWater) {
                     return this.getRandomRPS(gamestate.rounds);
                 } else if (this.breaksWithDynamite) {
-                    return "W";
+                    return this.getMoveByOdds(0.5, 0, gamestate.rounds);
                 }
             }
             if (drawStreak > 1 && this.myDynamite > this.minDynamite) {
@@ -59,7 +62,7 @@ class Brokenbot {
         const waterOdds = this.getWaterOdds(gamestate.rounds);
         const dynamiteOdds =
             this.myDynamite > this.minDynamite && gamestate.rounds.length > 20
-                ? 1 / 40
+                ? 1 / 20
                 : 0;
         return this.getMoveByOdds(waterOdds, dynamiteOdds, gamestate.rounds);
     }
@@ -74,12 +77,12 @@ class Brokenbot {
         const recentRounds = rounds.slice(-numOfRounds);
         const numberOfDynamite = recentRounds.filter(round => round.p2 === "D")
             .length;
-        return numberOfDynamite / (numOfRounds * 2);
+        return numberOfDynamite / (numOfRounds * 1.5);
     }
 
     getRandomMove() {
         let moves = ["R", "P", "S"];
-        if (this.myDynamite > 0) {
+        if (this.myDynamite > this.minDynamite) {
             moves.push("D");
         }
         if (this.opponentDynamite > 0) {
@@ -96,7 +99,7 @@ class Brokenbot {
         const random = Math.random();
         if (random < wOdds) {
             return "W";
-        } else if (random < dOdds + wOdds) {
+        } else if (this.myDynamite > this.minDynamite && random < dOdds + wOdds) {
             this.myDynamite--;
             return "D";
         } else {

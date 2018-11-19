@@ -1,11 +1,20 @@
 class RandomBot {
+    constructor() {
+        this.dynamite = 100;
+    }
     makeMove(gamestate) {
         return this.getRandomMove();
     }
 
     getRandomMove() {
-        const moves = ["R", "P", "S", "W"];
+        let moves = ["R", "P", "S"];
+        if (this.dynamite > 0) {
+            moves.push("D");
+        }
         const result = Utility.getRandomFromArray(moves);
+        if (result === "D") {
+            this.dynamite--;
+        }
         return result;
     }
 }
