@@ -8,6 +8,7 @@ class Brokenbot {
         this.opponentScore = 0;
         this.breaksWithDynamite = false;
         this.breaksWithWater = false;
+        this.rpsWindowSize = 50;
     }
 
     makeMove(gamestate) {
@@ -126,7 +127,7 @@ class Brokenbot {
             S: 0,
         }
         let i = rounds.length - 1;
-        while (i >= 0 && (rpsMoves.R + rpsMoves.P + rpsMoves.S) < 200) {
+        while (i >= 0 && (rpsMoves.R + rpsMoves.P + rpsMoves.S) < this.rpsWindowSize) {
             if (rounds[i].p2 === "R") {
                 rpsMoves.R++;
             } else if (rounds[i].p2 === "P") {
@@ -134,8 +135,26 @@ class Brokenbot {
             } else if (rounds[i].p2 === "S") {
                 rpsMoves.S++;
             }
+            i--;
         }
         return rpsMoves;
+    }
+
+    beatLastMove(rounds) {
+        switch(rounds[rounds.length - 1]) {
+            case "R":
+                return "P";
+            case "P":
+                return "S";
+            case "S":
+                return "R";
+            case "W":
+                return this.getRandomRPS(rounds);
+            case "D":
+                return "W";
+            default:
+                return this.getRandomRPS(rounds);
+        }
     }
 
     getLastWinner(rounds) {
