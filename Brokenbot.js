@@ -8,10 +8,13 @@ class Brokenbot {
         this.opponentScore = 0;
         this.breaksWithDynamite = false;
         this.breaksWithWater = false;
-        this.rpsWindowSize = 20;
+        this.rpsWindowSize = 1;
     }
 
     makeMove(gamestate) {
+        if (this.opponentDynamite < 1) {
+            this.breaksWithDynamite = false;
+        }
         const lastWinner = this.getLastWinner(gamestate.rounds);
         const drawStreak = Utility.getDrawStreak(gamestate.rounds);
         const prevDrawStreak = Utility.getDrawStreak(
@@ -108,19 +111,20 @@ class Brokenbot {
     }
 
     getRandomRPS(rounds) {
-        const random = Math.random();
-        const rpsMoves = this.getLastRPSMoves(rounds)
-        const total = rpsMoves.R + rpsMoves.P + rpsMoves.S;
-        if (total === 0) {
-            return Utility.getRandomFromArray(["R", "P", "S"]);
-        }
-        if (random < rpsMoves.R / total) {
-            return "P";
-        } else if (random < (rpsMoves.R + rpsMoves.P) / total) {
-            return "S";
-        } else {
-            return "R";
-        }
+        // const random = Math.random();
+        // const rpsMoves = this.getLastRPSMoves(rounds)
+        // const total = rpsMoves.R + rpsMoves.P + rpsMoves.S;
+        // if (total === 0) {
+        //     return Utility.getRandomFromArray(["R", "P", "S"]);
+        // }
+        // if (random < rpsMoves.R / total) {
+        //     return "P";
+        // } else if (random < (rpsMoves.R + rpsMoves.P) / total) {
+        //     return "S";
+        // } else {
+        //     return "R";
+        // }
+        return Utility.getRandomFromArray(["R", "P", "S"]);
     }
 
     getLastRPSMoves(rounds) {
