@@ -8,11 +8,6 @@ class Brokenbot {
         this.opponentScore = 0;
         this.breaksWithDynamite = false;
         this.breaksWithWater = false;
-        this.opponentMoves = {
-            R: 0,
-            P: 0,
-            S: 0,
-        }
     }
 
     makeMove(gamestate) {
@@ -50,7 +45,7 @@ class Brokenbot {
             }
             if (drawStreak >= this.opponentDrawCounter) {
                 if (this.breaksWithWater) {
-                    return this.getRandomRPS();
+                    return this.getRandomRPS(gamestate.rounds);
                 } else if (this.breaksWithDynamite) {
                     return "W";
                 }
@@ -65,7 +60,7 @@ class Brokenbot {
             this.myDynamite > this.minDynamite && gamestate.rounds.length > 20
                 ? 1 / 40
                 : 0;
-        return this.getMoveByOdds(waterOdds, dynamiteOdds);
+        return this.getMoveByOdds(waterOdds, dynamiteOdds, gamestate.rounds);
     }
 
     getWaterOdds(rounds) {
@@ -96,7 +91,7 @@ class Brokenbot {
         return result;
     }
 
-    getMoveByOdds(wOdds, dOdds) {
+    getMoveByOdds(wOdds, dOdds, rounds) {
         const random = Math.random();
         if (random < wOdds) {
             return "W";
@@ -104,41 +99,48 @@ class Brokenbot {
             this.myDynamite--;
             return "D";
         } else {
-            return this.getRandomRPS();
+            return this.getRandomRPS(rounds);
         }
     }
 
-    getRandomRPS() {
+    getRandomRPS(rounds) {
         const random = Math.random();
-        const rpsMoves = this.opponentMoves.R + this.opponentMoves.P + this.opponentMoves.S;
-        if (rpsMoves === 0) {
+        const rpsMoves = this.getLastRPSMoves(rounds)
+        const total = rpsMoves.R + rpsMoves.P + rpsMoves.S;
+        if (total === 0) {
             return Utility.getRandomFromArray(["R", "P", "S"]);
         }
-        if (random < this.opponentMoves.R / rpsMoves) {
+        if (random < rpsMoves.R / total) {
             return "P";
-        } else if (random < (this.opponentMoves.R + this.opponentMoves.P) / rpsMoves) {
+        } else if (random < (rpsMoves.R + rpsMoves.P) / total) {
             return "S";
         } else {
             return "R";
         }
     }
 
+    getLastRPSMoves(rounds) {
+        let rpsMoves = {
+            R: 0,
+            P: 0,
+            S: 0,
+        }
+        let i = rounds.length - 1;
+        while (i >= 0 && (rpsMoves.R + rpsMoves.P + rpsMoves.S) < 200) {
+            if (rounds[i].p2 === "R") {
+                rpsMoves.R++;
+            } else if (rounds[i].p2 === "P") {
+                rpsMoves.R++;
+            } else if (rounds[i].p2 === "S") {
+                rpsMoves.S++;
+            }
+        }
+        return rpsMoves;
+    }
+
     getLastWinner(rounds) {
         if (!rounds.length > 0) {
             return;
-        }
-        switch(rounds[rounds.length - 1].p2) {
-            case "R":
-                this.opponentMoves.R++;
-                break;
-            case "P":
-                this.opponentMoves.P++;
-                break;
-            case "S":
-                this.opponentMoves.S++;
-                break;
-            default:
-                break;
         }
         if (rounds[rounds.length - 1].p2 === "D") {
             this.opponentDynamite--;
